@@ -1,0 +1,1290 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import type { JSX, RefObject } from 'react';
+import { motion, useMotionValueEvent, useReducedMotion, useScroll } from 'framer-motion';
+import { skillsData } from '../data/skills';
+import { projectsData } from '../data/projects';
+import { techIcon } from '../components/ui/TechIcons';
+import { SkillsBlueprint } from '../components/blueprint/TechnicalBlueprint';
+import { BarChart, Brain, Code, Cpu, Database, Grid, Sparkles, Wrench } from '../components/ui/Icons';
+
+/* =========================================================================
+   PHASE 9C — SKILLS & TECHNOLOGIES SECTION
+   Clean editorial light styling with perspective card depth, real skills
+   and projects data grounding, and natural scroll-driven activation.
+   ========================================================================= */
+
+type Skill = (typeof skillsData)[number]['skills'][number] & {
+  categoryId: string;
+  categoryName: string;
+  categoryDescription: string;
+};
+
+type EvidenceLevel = 'Core' | 'Applied' | 'Working' | 'Foundational';
+
+const ALL = 'all';
+
+const PHASE9C_STYLES = `/* PHASE 9C — Integrated Styles for Skills.tsx */
+.phase9c-skills {
+  position: relative;
+  background: transparent;
+  color: var(--fg, #090d16);
+  overflow: clip;
+}
+.phase9c-sticky {
+  position: sticky;
+  top: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+.phase9c-shell {
+  width: min(1500px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: clamp(42px, 5.5vw, 80px) 0 28px;
+  position: relative;
+}
+.phase9c-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 440px);
+  gap: 40px;
+  align-items: end;
+  margin-bottom: 24px;
+}
+.phase9c-kicker {
+  font: 600 0.68rem/1 var(--font-mono, ui-monospace);
+  letter-spacing: 0.18em;
+  color: var(--subtle-fg, #475467);
+  display: block;
+}
+.phase9c-header h2 {
+  font-size: clamp(2.4rem, 5.5vw, 5.2rem);
+  line-height: 0.92;
+  letter-spacing: -0.05em;
+  margin: 10px 0 0;
+  max-width: 900px;
+  color: var(--fg, #090d16);
+}
+.phase9c-header p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--muted-fg, #334155);
+  max-width: 440px;
+  margin: 0 0 4px;
+}
+.phase9c-layout {
+  display: grid;
+  grid-template-columns: 215px minmax(460px, 1fr) minmax(280px, 350px);
+  gap: 24px;
+  align-items: center;
+}
+.phase9c-categories {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.phase9c-category {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: rgba(255, 255, 255, 0.72);
+  padding: 11px 12px;
+  border-radius: var(--radius-md, 14px);
+  text-align: left;
+  color: var(--muted-fg, #334155);
+  font: 500 0.78rem/1.2 var(--font-mono, ui-monospace);
+  cursor: pointer;
+  transition: all var(--dur-fast, 160ms) var(--ease-out, ease);
+}
+.phase9c-category:hover,
+.phase9c-category:focus-visible {
+  border-color: rgba(9, 13, 22, 0.25);
+  background: #ffffff;
+  color: var(--fg, #090d16);
+  transform: translateX(3px);
+  outline: none;
+}
+.phase9c-category.is-active {
+  background: var(--fg, #090d16);
+  color: #ffffff;
+  border-color: var(--fg, #090d16);
+  box-shadow: 0 14px 32px rgba(9, 13, 22, 0.14);
+}
+.phase9c-category b {
+  font-size: 0.65rem;
+  opacity: 0.75;
+  font-weight: 600;
+}
+.phase9c-main {
+  position: relative;
+  min-width: 0;
+  perspective: 1200px;
+}
+.phase9c-carousel-controls {
+  position: absolute;
+  right: 6px;
+  top: -8px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font: 600 0.62rem/1 var(--font-mono, ui-monospace);
+  letter-spacing: 0.1em;
+  color: var(--subtle-fg, #475467);
+}
+.phase9c-carousel-controls button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: 0.9rem;
+  color: var(--fg, #090d16);
+  transition: all var(--dur-fast, 160ms) var(--ease-out, ease);
+}
+.phase9c-carousel-controls button:hover,
+.phase9c-carousel-controls button:focus-visible {
+  background: var(--fg, #090d16);
+  color: #ffffff;
+  border-color: var(--fg, #090d16);
+  outline: none;
+  transform: scale(1.05);
+}
+
+/* 3D Perspective Stage */
+.phase9c-stage {
+  position: relative;
+  min-height: 540px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 1000px;
+  isolation: isolate;
+}
+.phase9c-constellation__paths {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 0;
+}
+.phase9c-orbit {
+  fill: none;
+  stroke: rgba(9, 13, 22, 0.10);
+  stroke-width: 1;
+  stroke-dasharray: 4 6;
+}
+.phase9c-orbit--two {
+  stroke: rgba(196, 142, 82, 0.22);
+  stroke-dasharray: 2 8;
+}
+.phase9c-path {
+  fill: none;
+  stroke: rgba(9, 13, 22, 0.12);
+  stroke-width: 1;
+  stroke-dasharray: 3 8;
+}
+.phase9c-path--accent {
+  stroke: rgba(196, 142, 82, 0.32);
+}
+.phase9c-ring {
+  fill: none;
+  stroke: rgba(9, 13, 22, 0.07);
+  stroke-width: 1;
+}
+.phase9c-ring--inner {
+  stroke-dasharray: 1 6;
+}
+
+/* Large Center Active Skill Card */
+.phase9c-center-node {
+  position: relative;
+  z-index: 6;
+  width: min(340px, 86%);
+  border-radius: var(--radius-xl, 24px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 28px;
+  background: linear-gradient(165deg, #18202d 0%, #0d1219 55%, #080c12 100%);
+  color: #ffffff;
+  border: 1px solid rgba(196, 142, 82, 0.35);
+  box-shadow: 0 30px 70px rgba(9, 13, 22, 0.25), inset 0 1px 1px 0 rgba(255, 255, 255, 0.12);
+  cursor: default;
+}
+.phase9c-center-node::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 1px dashed rgba(196, 142, 82, 0.25);
+  border-radius: calc(var(--radius-xl, 24px) + 6px);
+  pointer-events: none;
+}
+.phase9c-center-icon-wrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  display: grid;
+  place-items: center;
+  color: #ffffff;
+  margin-bottom: 16px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+.phase9c-center-node__category {
+  font: 600 0.58rem/1 var(--font-mono, ui-monospace);
+  letter-spacing: 0.16em;
+  color: #c48e52;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.phase9c-center-node__title {
+  font-size: clamp(1.4rem, 2.8vw, 1.85rem);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0 0 10px;
+  color: #ffffff !important;
+}
+.phase9c-center-node__descriptor {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: #cbd5e1 !important;
+  max-width: 280px;
+  margin: 0 0 14px;
+}
+.phase9c-center-node__badge-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.phase9c-center-badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font: 600 0.58rem/1 var(--font-mono, ui-monospace);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.phase9c-center-badge--core {
+  background: rgba(196, 142, 82, 0.2);
+  color: #e2b17a;
+  border: 1px solid rgba(196, 142, 82, 0.45);
+}
+.phase9c-center-badge--applied {
+  background: rgba(59, 130, 246, 0.16);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.35);
+}
+.phase9c-center-badge--working {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Perspective Side Cards */
+.phase9c-side-card {
+  position: absolute;
+  top: 50%;
+  width: 175px;
+  min-height: 125px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  padding: 16px 18px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  border-radius: var(--radius-lg, 18px);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 18px 42px rgba(9, 13, 22, 0.08);
+  cursor: pointer;
+  text-align: left;
+  z-index: 3;
+  opacity: 0.72;
+  transition: all 0.32s var(--ease-out, ease);
+  transform-origin: center center;
+}
+.phase9c-side-card--left {
+  left: 0%;
+  transform: translate(-10%, -50%) rotateY(18deg) scale(0.88);
+}
+.phase9c-side-card--right {
+  right: 0%;
+  transform: translate(10%, -50%) rotateY(-18deg) scale(0.88);
+}
+.phase9c-side-card:hover,
+.phase9c-side-card:focus-visible {
+  opacity: 1;
+  background: #ffffff;
+  box-shadow: 0 24px 50px rgba(9, 13, 22, 0.14);
+  border-color: rgba(9, 13, 22, 0.25);
+  outline: none;
+}
+.phase9c-side-card--left:hover,
+.phase9c-side-card--left:focus-visible {
+  transform: translate(-6%, -50%) rotateY(8deg) scale(0.93);
+}
+.phase9c-side-card--right:hover,
+.phase9c-side-card--right:focus-visible {
+  transform: translate(6%, -50%) rotateY(-8deg) scale(0.93);
+}
+.phase9c-side-card__tag {
+  font: 600 0.52rem/1 var(--font-mono, ui-monospace);
+  letter-spacing: 0.14em;
+  color: var(--subtle-fg, #475467);
+  text-transform: uppercase;
+}
+.phase9c-side-card__icon-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+.phase9c-side-card__icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--surface-sunken, #f8fafc);
+  border: 1px solid var(--border-color, #e2e8f0);
+  display: grid;
+  place-items: center;
+  color: var(--fg, #090d16);
+  flex-shrink: 0;
+}
+.phase9c-side-card strong {
+  font-size: 0.95rem;
+  line-height: 1.2;
+  color: var(--fg, #090d16);
+  font-weight: 700;
+  display: block;
+}
+.phase9c-side-card small {
+  font-size: 0.65rem;
+  color: var(--muted-fg, #475467);
+  display: block;
+}
+
+/* Detail Panel */
+.phase9c-details {
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-radius: var(--radius-xl, 22px);
+  padding: 22px;
+  box-shadow: 0 20px 50px rgba(9, 13, 22, 0.06);
+  max-height: 520px;
+  overflow-y: auto;
+}
+.phase9c-details__topline {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font: 600 0.54rem/1.2 var(--font-mono, ui-monospace);
+  letter-spacing: 0.12em;
+  color: var(--subtle-fg, #475467);
+}
+.phase9c-details__identity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0 18px;
+}
+.phase9c-details__icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  background: var(--fg, #090d16);
+  color: #ffffff;
+  flex-shrink: 0;
+}
+.phase9c-details h3 {
+  font-size: 1.35rem;
+  line-height: 1.1;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.phase9c-details__identity p {
+  font: 500 0.65rem/1.2 var(--font-mono, ui-monospace);
+  color: var(--subtle-fg, #475467);
+  margin: 5px 0 0;
+}
+.phase9c-details__section {
+  padding: 13px 0;
+  border-top: 1px solid var(--border-color, #e2e8f0);
+}
+.phase9c-details__label {
+  font: 600 0.54rem/1 var(--font-mono, ui-monospace);
+  letter-spacing: 0.13em;
+  color: var(--subtle-fg, #475467);
+  text-transform: uppercase;
+}
+.phase9c-details__section p {
+  font-size: 0.8rem;
+  line-height: 1.55;
+  color: var(--muted-fg, #334155);
+  margin: 7px 0 0;
+}
+.phase9c-details__level {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+  font: 700 0.72rem/1 var(--font-mono, ui-monospace);
+  color: var(--fg, #090d16);
+}
+.phase9c-details__level-line {
+  height: 4px;
+  flex: 1;
+  background: var(--border-color, #e2e8f0);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.phase9c-details__level-line i {
+  display: block;
+  height: 100%;
+  background: var(--fg, #090d16);
+}
+.phase9c-details small {
+  display: block;
+  color: var(--subtle-fg, #475467);
+  font-size: 0.62rem;
+  line-height: 1.4;
+  margin-top: 6px;
+}
+.phase9c-details__projects {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 8px;
+}
+.phase9c-project-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 11px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: #ffffff;
+  border-radius: 10px;
+  font-size: 0.72rem;
+  text-align: left;
+  cursor: pointer;
+  color: var(--fg, #090d16);
+  transition: all var(--dur-fast, 160ms) var(--ease-out, ease);
+}
+.phase9c-project-link:hover,
+.phase9c-project-link:focus-visible {
+  border-color: rgba(196, 142, 82, 0.6);
+  background: #fffdfa;
+  transform: translateX(2px);
+  outline: none;
+}
+
+/* Scroll Status Bar */
+.phase9c-scroll-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 12px 0 16px;
+  font: 600 0.54rem/1 var(--font-mono, ui-monospace);
+  letter-spacing: 0.14em;
+  color: var(--subtle-fg, #475467);
+}
+.phase9c-scroll-status__line {
+  width: 140px;
+  height: 2px;
+  background: var(--border-color, #e2e8f0);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.phase9c-scroll-status__line i {
+  display: block;
+  height: 100%;
+  background: var(--fg, #090d16);
+  transition: width 0.2s ease;
+}
+
+/* Technology Showcase Rails */
+.phase9c-rails {
+  margin-top: 4px;
+  border-top: 1px dashed var(--border-color, #e2e8f0);
+  border-bottom: 1px dashed var(--border-color, #e2e8f0);
+  padding: 8px 0 12px;
+  overflow: hidden;
+}
+.phase9c-rails__label {
+  font: 600 0.55rem/1 var(--font-mono, ui-monospace);
+  letter-spacing: 0.16em;
+  color: var(--subtle-fg, #475467);
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+.phase9c-rail {
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.phase9c-rail:last-child {
+  margin-bottom: 0;
+}
+.phase9c-rail__track {
+  display: flex;
+  width: max-content;
+  gap: 10px;
+}
+.phase9c-rail--left .phase9c-rail__track {
+  animation: phase9cRailLeft 60s linear infinite;
+}
+.phase9c-rail--right .phase9c-rail__track {
+  animation: phase9cRailRight 64s linear infinite;
+}
+.phase9c-rail:hover .phase9c-rail__track,
+.phase9c-rail:focus-within .phase9c-rail__track {
+  animation-play-state: paused;
+}
+.phase9c-rail__item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 140px;
+  padding: 9px 12px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  color: var(--fg, #090d16);
+  cursor: pointer;
+  transition: all var(--dur-fast, 160ms) var(--ease-out, ease);
+}
+.phase9c-rail__item span {
+  font: 600 0.68rem/1 var(--font-mono, ui-monospace);
+  white-space: nowrap;
+}
+.phase9c-rail__item:hover,
+.phase9c-rail__item:focus-visible {
+  background: var(--fg, #090d16);
+  color: #ffffff;
+  border-color: var(--fg, #090d16);
+  outline: none;
+}
+@keyframes phase9cRailLeft {
+  to { transform: translateX(-50%); }
+}
+@keyframes phase9cRailRight {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+/* Stats Row */
+.phase9c-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin-top: 14px;
+  border-bottom: 1px solid var(--border-color, #e2e8f0);
+}
+.phase9c-stats > div {
+  padding: 12px;
+  border-left: 1px solid var(--border-color, #e2e8f0);
+}
+.phase9c-stats > div:first-child {
+  border-left: 0;
+}
+.phase9c-stats strong {
+  display: block;
+  font-size: 1.3rem;
+  letter-spacing: -0.04em;
+  color: var(--fg, #090d16);
+}
+.phase9c-stats span {
+  display: block;
+  margin-top: 3px;
+  font: 600 0.52rem/1.2 var(--font-mono, ui-monospace);
+  letter-spacing: 0.12em;
+  color: var(--subtle-fg, #475467);
+}
+
+/* Responsive Media Queries */
+@media (max-width: 1180px) {
+  .phase9c-layout {
+    grid-template-columns: 190px minmax(400px, 1fr);
+  }
+  .phase9c-details {
+    grid-column: 1 / -1;
+    max-height: none;
+  }
+  .phase9c-side-card {
+    width: 150px;
+    padding: 14px;
+  }
+  .phase9c-header {
+    grid-template-columns: 1fr 300px;
+  }
+}
+@media (max-width: 880px) {
+  .phase9c-sticky {
+    position: relative;
+    min-height: auto;
+    align-items: flex-start;
+  }
+  .phase9c-skills {
+    min-height: auto !important;
+  }
+  .phase9c-shell {
+    width: min(100% - 28px, 680px);
+    padding: 36px 0 20px;
+  }
+  .phase9c-header {
+    display: block;
+    margin-bottom: 18px;
+  }
+  .phase9c-header h2 {
+    font-size: clamp(2.2rem, 10vw, 3.8rem);
+  }
+  .phase9c-header p {
+    font-size: 0.88rem;
+    margin-top: 12px;
+  }
+  .phase9c-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .phase9c-categories {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: 100%;
+  }
+  .phase9c-category {
+    min-width: 0;
+    padding: 10px;
+    font-size: 0.68rem;
+  }
+  .phase9c-main {
+    width: 100%;
+  }
+  .phase9c-stage {
+    min-height: 480px;
+  }
+  .phase9c-side-card {
+    display: none;
+  }
+  .phase9c-details {
+    width: 100%;
+  }
+  .phase9c-stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .phase9c-stats > div:nth-child(3) {
+    border-left: 0;
+  }
+  .phase9c-stats > div {
+    border-top: 1px solid var(--border-color, #e2e8f0);
+  }
+}
+@media (max-width: 500px) {
+  .phase9c-categories {
+    grid-template-columns: 1fr 1fr;
+  }
+  .phase9c-category span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .phase9c-stage {
+    min-height: 420px;
+  }
+  .phase9c-center-node {
+    width: 100%;
+    padding: 24px 18px;
+  }
+  .phase9c-center-node__title {
+    font-size: 1.4rem;
+  }
+  .phase9c-center-node__descriptor {
+    font-size: 0.72rem;
+  }
+  .phase9c-details {
+    padding: 18px;
+  }
+}
+
+/* Reduced Motion Safeguards */
+@media (prefers-reduced-motion: reduce) {
+  .phase9c-rail--left .phase9c-rail__track,
+  .phase9c-rail--right .phase9c-rail__track {
+    animation: none;
+  }
+  .phase9c-category,
+  .phase9c-side-card,
+  .phase9c-center-node {
+    transition: none !important;
+  }
+  .phase9c-sticky {
+    position: relative;
+  }
+  .phase9c-skills {
+    min-height: auto !important;
+  }
+}
+.reduced-motion .phase9c-rail--left .phase9c-rail__track,
+.reduced-motion .phase9c-rail--right .phase9c-rail__track {
+  animation: none;
+}
+.reduced-motion .phase9c-sticky {
+  position: relative;
+}
+`;
+
+const GROUP_ICONS: Record<string, (props: { size?: number; className?: string }) => JSX.Element> = {
+  'data-science': Database,
+  'machine-learning': Brain,
+  'generative-ai': Sparkles,
+  'agentic-ai': Cpu,
+  programming: Code,
+  tools: Wrench,
+  visualization: BarChart,
+};
+
+function normalize(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function projectMatches(skill: Skill) {
+  const skillLower = normalize(skill.name);
+  return projectsData.filter(project =>
+    project.technologies.some(tech => {
+      const techLower = normalize(tech);
+      return (
+        techLower === skillLower ||
+        (skillLower === 'python' && techLower.includes('python')) ||
+        (skillLower === 'html' && techLower.includes('html')) ||
+        (skillLower === 'css' && techLower.includes('css'))
+      );
+    }),
+  );
+}
+
+function getEvidenceLevel(skill: Skill): EvidenceLevel | undefined {
+  if (skill.isPrimary) return 'Core';
+  const matches = projectMatches(skill);
+  if (matches.length > 0) return 'Applied';
+  if (skill.usedFor || skill.context) return 'Working';
+  return undefined;
+}
+
+function skillFromCategory(category: (typeof skillsData)[number]): Skill[] {
+  return category.skills.map(skill => ({
+    ...skill,
+    categoryId: category.id,
+    categoryName: category.name,
+    categoryDescription: category.description,
+  }));
+}
+
+function getUniqueAllSkills(): Skill[] {
+  const seen = new Set<string>();
+  const result: Skill[] = [];
+
+  skillsData.forEach(category => {
+    category.skills.forEach(skill => {
+      const key = normalize(skill.name);
+      if (!seen.has(key)) {
+        seen.add(key);
+        result.push({
+          ...skill,
+          categoryId: category.id,
+          categoryName: category.name,
+          categoryDescription: category.description,
+        });
+      }
+    });
+  });
+
+  return result;
+}
+
+function useElementProgress(ref: RefObject<HTMLElement | null>) {
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start start', 'end end'],
+  });
+  return scrollYProgress;
+}
+
+/* ---- Center Active Skill Card Component ---------------------------------- */
+function CenterSkillCard({
+  skill,
+  reducedMotion,
+}: {
+  skill: Skill;
+  reducedMotion: boolean;
+}) {
+  const level = getEvidenceLevel(skill);
+  const Icon = techIcon(skill.name);
+
+  return (
+    <motion.div
+      key={skill.name}
+      className="phase9c-center-node"
+      initial={reducedMotion ? false : { scale: 0.92, opacity: 0.6 }}
+      animate={{ scale: 1, opacity: 1 }}
+      exit={reducedMotion ? undefined : { scale: 0.92, opacity: 0.6 }}
+      transition={{ duration: 0.38, ease: [0.16, 1, 0.3, 1] }}
+      aria-label={`Active skill: ${skill.name}`}
+    >
+      <div className="phase9c-center-icon-wrap" aria-hidden="true">
+        <Icon size={34} />
+      </div>
+      <span className="phase9c-center-node__category">{skill.categoryName}</span>
+      <h3 className="phase9c-center-node__title">{skill.name}</h3>
+      <p className="phase9c-center-node__descriptor">
+        {skill.proficiencyHint || 'Technical capability grounded in coursework and production projects.'}
+      </p>
+      <div className="phase9c-center-node__badge-row">
+        {level && (
+          <span className={`phase9c-center-badge phase9c-center-badge--${level.toLowerCase()}`}>
+            {level} FOCUS
+          </span>
+        )}
+        {skill.isPrimary && (
+          <span className="phase9c-center-badge phase9c-center-badge--core">
+            PRIMARY TOOLKIT
+          </span>
+        )}
+      </div>
+    </motion.div>
+  );
+}
+
+/* ---- Detail Panel Component ---------------------------------------------- */
+function DetailPanel({
+  skill,
+  onProjectClick,
+}: {
+  skill: Skill;
+  onProjectClick: () => void;
+}) {
+  const projects = projectMatches(skill);
+  const level = getEvidenceLevel(skill);
+  const Icon = techIcon(skill.name);
+
+  return (
+    <motion.aside
+      className="phase9c-details"
+      key={skill.name}
+      initial={{ opacity: 0, x: 16 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+      aria-live="polite"
+    >
+      <div className="phase9c-details__topline">
+        <span>SELECTED SKILL</span>
+        <span>02 / {String(skill.categoryId).toUpperCase()}</span>
+      </div>
+
+      <div className="phase9c-details__identity">
+        <div className="phase9c-details__icon" aria-hidden="true">
+          <Icon size={26} />
+        </div>
+        <div>
+          <h3>{skill.name}</h3>
+          <p>{skill.categoryName}</p>
+        </div>
+      </div>
+
+      <div className="phase9c-details__section">
+        <span className="phase9c-details__label">CAPABILITY</span>
+        <p>{skill.proficiencyHint || 'Technical skill represented in the portfolio system.'}</p>
+      </div>
+
+      {level && (
+        <div className="phase9c-details__section">
+          <span className="phase9c-details__label">EVIDENCE LEVEL</span>
+          <div className="phase9c-details__level">
+            <span>{level}</span>
+            <span className="phase9c-details__level-line" aria-hidden="true">
+              <i style={{ width: level === 'Core' ? '85%' : level === 'Applied' ? '65%' : '45%' }} />
+            </span>
+          </div>
+          <small>Derived qualitatively from verified coursework, certifications and project repositories.</small>
+        </div>
+      )}
+
+      {skill.usedFor && (
+        <div className="phase9c-details__section">
+          <span className="phase9c-details__label">WHAT I USE IT FOR</span>
+          <p>{skill.usedFor}</p>
+        </div>
+      )}
+
+      {skill.context && (
+        <div className="phase9c-details__section">
+          <span className="phase9c-details__label">CONTEXT</span>
+          <p>{skill.context}</p>
+        </div>
+      )}
+
+      {projects.length > 0 && (
+        <div className="phase9c-details__section">
+          <span className="phase9c-details__label">USED IN</span>
+          <div className="phase9c-details__projects">
+            {projects.map(project => (
+              <button
+                key={project.id}
+                type="button"
+                className="phase9c-project-link"
+                onClick={onProjectClick}
+                title={`Navigate to Projects section for ${project.title}`}
+              >
+                <span>{project.title}</span>
+                <span aria-hidden="true">&nearr;</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </motion.aside>
+  );
+}
+
+/* ---- Technology Rails Component ------------------------------------------ */
+function TechnologyRails({
+  skills,
+  onSelect,
+}: {
+  skills: Skill[];
+  onSelect: (skill: Skill) => void;
+}) {
+  const railA = [...skills, ...skills];
+  const shift = Math.max(1, Math.floor(skills.length / 3));
+  const rotated = [...skills.slice(shift), ...skills.slice(0, shift)];
+  const railB = [...rotated, ...rotated];
+
+  return (
+    <div className="phase9c-rails" aria-label="Technology showcase">
+      <div className="phase9c-rails__label">LIVING TECHNOLOGY SHOWCASE</div>
+      <div className="phase9c-rail phase9c-rail--left">
+        <div className="phase9c-rail__track">
+          {railA.map((skill, index) => {
+            const Icon = techIcon(skill.name);
+            return (
+              <button
+                key={`rail-a-${skill.name}-${index}`}
+                type="button"
+                className="phase9c-rail__item"
+                tabIndex={index < skills.length ? 0 : -1}
+                aria-hidden={index >= skills.length}
+                onClick={() => onSelect(skill)}
+              >
+                <Icon size={18} />
+                <span>{skill.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="phase9c-rail phase9c-rail--right">
+        <div className="phase9c-rail__track">
+          {railB.map((skill, index) => {
+            const Icon = techIcon(skill.name);
+            return (
+              <button
+                key={`rail-b-${skill.name}-${index}`}
+                type="button"
+                className="phase9c-rail__item"
+                tabIndex={index < skills.length ? 0 : -1}
+                aria-hidden={index >= skills.length}
+                onClick={() => onSelect(skill)}
+              >
+                <Icon size={18} />
+                <span>{skill.name}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- Main Skills Section Component --------------------------------------- */
+export function Skills() {
+  const reducedMotion = Boolean(useReducedMotion());
+  const [activeCategory, setActiveCategory] = useState<string>(ALL);
+  const [selectedIndex, setSelectedIndex] = useState<number>(0);
+  const sectionRef = useRef<HTMLElement | null>(null);
+
+  const allSkills = useMemo(() => getUniqueAllSkills(), []);
+
+  const currentSkills = useMemo(() => {
+    if (activeCategory === ALL) return allSkills;
+    const cat = skillsData.find(c => c.id === activeCategory);
+    return cat ? skillFromCategory(cat) : [];
+  }, [activeCategory, allSkills]);
+
+  const selectedSkill = currentSkills[selectedIndex] ?? currentSkills[0];
+
+  const prevSkill =
+    currentSkills.length > 1
+      ? currentSkills[(selectedIndex - 1 + currentSkills.length) % currentSkills.length]
+      : null;
+
+  const nextSkill =
+    currentSkills.length > 1
+      ? currentSkills[(selectedIndex + 1) % currentSkills.length]
+      : null;
+
+  const progress = useElementProgress(sectionRef);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [activeCategory]);
+
+  useMotionValueEvent(progress, 'change', value => {
+    if (!currentSkills.length) return;
+    const maxIndex = Math.max(currentSkills.length - 1, 0);
+    const nextIndex = Math.min(maxIndex, Math.max(0, Math.round(value * maxIndex)));
+    setSelectedIndex(prev => (prev === nextIndex ? prev : nextIndex));
+  });
+
+  // Natural scroll height proportional to category size: ~50vh per skill, clamped comfortably
+  const sectionHeight = reducedMotion
+    ? 'auto'
+    : `${Math.min(Math.max(currentSkills.length * 48, 180), 900)}vh`;
+
+  const selectSkill = (skill: Skill) => {
+    const idx = currentSkills.findIndex(item => normalize(item.name) === normalize(skill.name));
+    if (idx >= 0) setSelectedIndex(idx);
+  };
+
+  const stepSkill = (direction: -1 | 1) => {
+    if (!currentSkills.length) return;
+    setSelectedIndex(prev => (prev + direction + currentSkills.length) % currentSkills.length);
+  };
+
+  const scrollToProjects = () => {
+    document.getElementById('projects')?.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth' });
+  };
+
+  // Extra safeguard hiding legacy hero blueprint objects
+  useEffect(() => {
+    const legacyHeroObjects = document.querySelectorAll('.bp-hero-container, .bp-hero-left-container');
+    legacyHeroObjects.forEach(element => {
+      (element as HTMLElement).style.display = 'none';
+    });
+  }, []);
+
+  return (
+    <>
+      <style dangerouslySetInnerHTML={{ __html: PHASE9C_STYLES }} />
+      <section
+        id="skills"
+        ref={sectionRef}
+        className="phase9c-skills"
+        style={{ minHeight: sectionHeight }}
+        aria-labelledby="phase9c-skills-title"
+      >
+        <div className="phase9c-sticky">
+          <div className="phase9c-shell">
+            <header className="phase9c-header">
+              <div>
+                <span className="phase9c-kicker">CHAPTER 02</span>
+                <h2 id="phase9c-skills-title">SKILLS &amp; TECHNOLOGIES</h2>
+              </div>
+              <p>
+                Technical capabilities and tools represented by coursework, Oracle certifications,
+                production repositories, and active industry training.
+              </p>
+            </header>
+
+            <div className="phase9c-layout">
+              {/* Left Column: Category Navigation */}
+              <nav className="phase9c-categories" aria-label="Skill categories">
+                <button
+                  type="button"
+                  className={`phase9c-category ${activeCategory === ALL ? 'is-active' : ''}`}
+                  aria-pressed={activeCategory === ALL}
+                  onClick={() => setActiveCategory(ALL)}
+                >
+                  <Grid size={16} />
+                  <span>All skills</span>
+                  <b>{allSkills.length}</b>
+                </button>
+
+                {skillsData.map(category => {
+                  const Icon = GROUP_ICONS[category.id] ?? Code;
+                  return (
+                    <button
+                      key={category.id}
+                      type="button"
+                      className={`phase9c-category ${activeCategory === category.id ? 'is-active' : ''}`}
+                      aria-pressed={activeCategory === category.id}
+                      onClick={() => setActiveCategory(category.id)}
+                    >
+                      <Icon size={16} />
+                      <span>{category.name}</span>
+                      <b>{category.skills.length}</b>
+                    </button>
+                  );
+                })}
+              </nav>
+
+              {/* Center Column: 3D Perspective Stage */}
+              <main className="phase9c-main">
+                <div className="phase9c-carousel-controls">
+                  <button type="button" onClick={() => stepSkill(-1)} aria-label="Previous skill">
+                    &larr;
+                  </button>
+                  <span>
+                    {String(selectedIndex + 1).padStart(2, '0')} / {String(currentSkills.length).padStart(2, '0')}
+                  </span>
+                  <button type="button" onClick={() => stepSkill(1)} aria-label="Next skill">
+                    &rarr;
+                  </button>
+                </div>
+
+                <div className="phase9c-stage">
+                  {/* Background architectural SVG orbits */}
+                  <svg className="phase9c-constellation__paths" viewBox="0 0 700 540" aria-hidden="true">
+                    <ellipse cx="350" cy="270" rx="270" ry="195" className="phase9c-orbit" />
+                    <ellipse
+                      cx="350"
+                      cy="270"
+                      rx="195"
+                      ry="270"
+                      transform="rotate(62 350 270)"
+                      className="phase9c-orbit phase9c-orbit--two"
+                    />
+                    <path d="M82 270 C180 85 520 85 618 270" className="phase9c-path" />
+                    <path d="M110 380 C235 480 475 480 590 380" className="phase9c-path phase9c-path--accent" />
+                    <circle cx="350" cy="270" r="210" className="phase9c-ring" />
+                    <circle cx="350" cy="270" r="145" className="phase9c-ring phase9c-ring--inner" />
+                  </svg>
+
+                  {/* Left Perspective Card: Previous Skill */}
+                  {prevSkill && (
+                    <button
+                      type="button"
+                      onClick={() => stepSkill(-1)}
+                      className="phase9c-side-card phase9c-side-card--left"
+                      aria-label={`Previous skill: ${prevSkill.name}`}
+                    >
+                      <span className="phase9c-side-card__tag">PREVIOUS</span>
+                      <div className="phase9c-side-card__icon-row">
+                        <div className="phase9c-side-card__icon" aria-hidden="true">
+                          {(() => {
+                            const Icon = techIcon(prevSkill.name);
+                            return <Icon size={16} />;
+                          })()}
+                        </div>
+                        <div>
+                          <strong>{prevSkill.name}</strong>
+                          <small>{prevSkill.categoryName}</small>
+                        </div>
+                      </div>
+                    </button>
+                  )}
+
+                  {/* Center Active Skill Card */}
+                  {selectedSkill && (
+                    <CenterSkillCard skill={selectedSkill} reducedMotion={reducedMotion} />
+                  )}
+
+                  {/* Right Perspective Card: Next Skill */}
+                  {nextSkill && (
+                    <button
+                      type="button"
+                      onClick={() => stepSkill(1)}
+                      className="phase9c-side-card phase9c-side-card--right"
+                      aria-label={`Next skill: ${nextSkill.name}`}
+                    >
+                      <span className="phase9c-side-card__tag">NEXT</span>
+                      <div className="phase9c-side-card__icon-row">
+                        <div className="phase9c-side-card__icon" aria-hidden="true">
+                          {(() => {
+                            const Icon = techIcon(nextSkill.name);
+                            return <Icon size={16} />;
+                          })()}
+                        </div>
+                        <div>
+                          <strong>{nextSkill.name}</strong>
+                          <small>{nextSkill.categoryName}</small>
+                        </div>
+                      </div>
+                    </button>
+                  )}
+                </div>
+              </main>
+
+              {/* Right Column: Live Detail Panel */}
+              {selectedSkill && (
+                <DetailPanel skill={selectedSkill} onProjectClick={scrollToProjects} />
+              )}
+            </div>
+
+            {/* Scroll Status Bar */}
+            <div className="phase9c-scroll-status" aria-live="polite">
+              <span>SCROLL TO EXPLORE</span>
+              <span className="phase9c-scroll-status__line">
+                <i
+                  style={{
+                    width: `${
+                      currentSkills.length > 1
+                        ? ((selectedIndex + 1) / currentSkills.length) * 100
+                        : 100
+                    }%`,
+                  }}
+                />
+              </span>
+              <span>NATURAL SCROLL</span>
+            </div>
+
+            {/* Living Technology Showcase Marquee Rails */}
+            <TechnologyRails
+              skills={currentSkills.length ? currentSkills : allSkills}
+              onSelect={selectSkill}
+            />
+
+            {/* Summary Statistics */}
+            <div className="phase9c-stats" aria-label="Skills summary">
+              <div>
+                <strong>{allSkills.length}</strong>
+                <span>TOTAL TECHNOLOGIES</span>
+              </div>
+              <div>
+                <strong>{skillsData.length}</strong>
+                <span>CORE DOMAINS</span>
+              </div>
+              <div>
+                <strong>{projectsData.length}</strong>
+                <span>PROJECTS</span>
+              </div>
+              <div>
+                <strong>{projectsData.filter(p => p.technologies.length > 0).length}</strong>
+                <span>TECH-BASED PROJECTS</span>
+              </div>
+            </div>
+
+            <SkillsBlueprint position="top" />
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}

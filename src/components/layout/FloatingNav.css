@@ -1,0 +1,473 @@
+/* =========================================================================
+   Floating navigation
+
+   Fixed dock. Page content scrolls underneath it and is never pushed around,
+   because the dock is taken out of flow entirely (position: fixed) and the
+   page reserves no space for it.
+   ========================================================================= */
+
+/* -------------------------------------------------------------------------
+   GLASS SETTINGS — the only two values you need to tune the see-through bar.
+
+   --nav-opacity : how solid the bar is (the fill, not the text).
+       75%  almost the same as the original (it was ~72%)
+       60%  clearly see-through; nav text still passes WCAG AA (4.5:1) even
+            directly over the darkest surface on the site (the dark cards)
+       50%  glassier; nav links dip to ~4.0:1 over the darkest cards
+       20%  CURRENT. Very glassy. Over white or light content the text is fine;
+            directly over a dark card the nav text drops to ~1.7:1 and is hard
+            to read. Raise this value if that bothers you.
+   --nav-blur    : blur of the content behind the bar. It was 20px, which frosted
+                   the bar so heavily that it read as solid white.
+   ------------------------------------------------------------------------- */
+.nav-dock,
+.nav-mobile {
+  --nav-opacity: 20%;
+  --nav-blur: 10px;
+  --nav-glass: color-mix(in srgb, var(--surface-elevated, #ffffff) var(--nav-opacity), transparent);
+}
+
+/* Browsers without backdrop-filter, or users who ask for less transparency,
+   get a near-solid bar so the text always stays readable. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .nav-dock,
+  .nav-mobile {
+    --nav-opacity: 94%;
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .nav-dock,
+  .nav-mobile {
+    --nav-opacity: 98%;
+    --nav-blur: 0px;
+  }
+}
+
+.nav-dock {
+  position: fixed;
+  top: clamp(0.65rem, 1.6vw, 1.15rem);
+  left: 50%;
+  translate: -50% 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  /* The dock itself must not intercept clicks outside the pill */
+  pointer-events: none;
+  width: min(100% - 1.6rem, calc(var(--maxw) - 1rem));
+}
+
+.nav-pill {
+  position: relative;
+  pointer-events: auto;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-pill);
+  background: var(--nav-glass);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), var(--shadow-nav);
+  -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(160%);
+  backdrop-filter: blur(var(--nav-blur)) saturate(160%);
+  overflow: hidden;
+  transition: width 520ms var(--ease-out), background-color var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out);
+  will-change: width;
+  max-width: 100%;
+}
+
+/* Hairline top highlight — reads as glass without full glassmorphism */
+.nav-pill::after {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--fg) 14%, transparent),
+    transparent
+  );
+  pointer-events: none;
+}
+
+/* ---- Morph layers ------------------------------------------------------ */
+.nav-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding-inline: 0.45rem;
+  white-space: nowrap;
+  transition: opacity 300ms var(--ease-out), transform 420ms var(--ease-out),
+    visibility 0s linear 0s;
+}
+
+/* Inactive layer: invisible and untabbable, but still laid out so its width
+   can be measured for the morph. */
+.nav-layer[data-active='false'] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition-delay: 0s, 0s, 300ms;
+}
+
+.nav-layer[data-active='true'] {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+}
+
+.nav-layer--expanded[data-active='false'] {
+  transform: translateY(-6px) scale(0.97);
+}
+
+.nav-layer--collapsed[data-active='false'] {
+  transform: translateY(6px) scale(0.97);
+}
+
+/* ---- Brand mark -------------------------------------------------------- */
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  margin-inline-end: 0.25rem;
+  background: transparent;
+  text-decoration: none;
+  overflow: visible;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.nav-brand:hover {
+  transform: scale(1.06);
+}
+
+/* ---- Links ------------------------------------------------------------- */
+.nav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding-inline: 0.75rem;
+  border-radius: var(--radius-pill);
+  color: var(--muted-fg);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
+}
+
+.nav-link:hover {
+  color: var(--fg);
+  background: rgba(9, 13, 22, 0.05);
+}
+
+.nav-link[aria-current='true'] {
+  color: var(--fg);
+  font-weight: 700;
+  background: rgba(9, 13, 22, 0.08);
+}
+
+/* ---- Collapsed state --------------------------------------------------- */
+.nav-current {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 38px;
+  padding-inline: 0.85rem 0.95rem;
+  border-radius: var(--radius-pill);
+  background: rgba(9, 13, 22, 0.06);
+  color: var(--fg);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+
+.nav-current__dot {
+  width: 7px;
+  height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent-color);
+  box-shadow: 0 0 8px var(--accent-color);
+  animation: dot-pulse 2.4s infinite ease-in-out;
+}
+
+@keyframes dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 12px var(--accent-color); }
+}
+
+/* The label swaps text as the active section changes — a quick fade keeps the
+   swap from reading as a glitch. */
+.nav-current__label {
+  animation: nav-label-in 300ms var(--ease-out);
+}
+
+@keyframes nav-label-in {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- Trailing controls ------------------------------------------------- */
+.nav-divider {
+  width: 1px;
+  height: 20px;
+  flex: none;
+  margin-inline: 0.3rem;
+  background: var(--border-color);
+}
+
+.nav-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: var(--radius-pill);
+  color: var(--muted-fg);
+  transition: color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.nav-icon-btn:hover {
+  color: var(--fg);
+  background: color-mix(in srgb, var(--fg) 8%, transparent);
+  transform: scale(1.05);
+}
+
+.nav-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 38px;
+  padding-inline: 0.9rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent-color);
+  color: var(--on-accent);
+  font-size: var(--step--1);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.nav-cta:hover {
+  background: color-mix(in srgb, var(--accent-color) 86%, var(--fg));
+  transform: translateY(-1px);
+}
+
+/* =========================================================================
+   Mobile
+   ========================================================================= */
+.nav-mobile {
+  position: fixed;
+  top: 0.6rem;
+  left: 50%;
+  translate: -50% 0;
+  z-index: 100;
+  width: calc(100% - 1.4rem);
+  max-width: 34rem;
+  height: var(--nav-h);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 0.45rem;
+  border-radius: var(--radius-pill);
+  background: var(--nav-glass);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  box-shadow: inset 0 1px 1px 0 rgba(255, 255, 255, 0.95), var(--shadow-nav);
+  -webkit-backdrop-filter: blur(var(--nav-blur)) saturate(160%);
+  backdrop-filter: blur(var(--nav-blur)) saturate(160%);
+}
+
+.nav-mobile__current {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--fg);
+  font-size: var(--step--1);
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0.7rem;
+  background: var(--scrim);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: fade-in 200ms var(--ease-out);
+}
+
+.nav-sheet__panel {
+  width: 100%;
+  max-width: 34rem;
+  margin-top: 0;
+  padding: 0.7rem;
+  border-radius: var(--radius-xl);
+  background: var(--surface-elevated);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+  animation: sheet-in 320ms var(--ease-out);
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.nav-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.35rem 0.6rem;
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 0.4rem;
+}
+
+.nav-sheet__title {
+  font-family: var(--font-display);
+  font-size: var(--step-0);
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.nav-sheet__link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.6rem 0.85rem;
+  border-radius: var(--radius-md);
+  color: var(--muted-fg);
+  font-size: var(--step-0);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+.nav-sheet__link:hover {
+  background: var(--surface-sunken);
+  color: var(--fg);
+}
+
+.nav-sheet__link[aria-current='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.nav-sheet__index {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--subtle-fg);
+}
+
+.nav-sheet__link[aria-current='true'] .nav-sheet__index {
+  color: var(--accent-text);
+}
+
+.nav-sheet__foot {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.6rem 0.35rem 0.2rem;
+  margin-top: 0.4rem;
+  border-top: 1px solid var(--border-color);
+}
+
+.nav-sheet__foot .btn {
+  flex: 1;
+}
+
+/* =========================================================================
+   Scroll progress hairline, pinned to the very top of the viewport
+   ========================================================================= */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  z-index: 120;
+  background: transparent;
+  pointer-events: none;
+}
+
+.scroll-progress__bar {
+  height: 100%;
+  transform-origin: 0 50%;
+  background: linear-gradient(90deg, var(--accent-color), var(--secondary-accent-color));
+  transition: transform 90ms linear;
+}
+
+/* Back-to-top */
+.to-top {
+  position: fixed;
+  right: clamp(0.9rem, 3vw, 1.6rem);
+  bottom: clamp(0.9rem, 3vw, 1.6rem);
+  z-index: 90;
+  width: 46px;
+  height: 46px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-pill);
+  background: var(--surface-elevated);
+  color: var(--muted-fg);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-md);
+  opacity: 0;
+  transform: translateY(12px) scale(0.9);
+  pointer-events: none;
+  transition: opacity var(--dur) var(--ease-out), transform var(--dur) var(--ease-out),
+    color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+
+.to-top[data-visible='true'] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.to-top:hover {
+  color: var(--accent-text);
+  border-color: var(--accent-color);
+}

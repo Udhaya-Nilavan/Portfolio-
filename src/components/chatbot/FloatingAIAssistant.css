@@ -1,0 +1,116 @@
+.floating-ai-assistant {
+  position: fixed;
+  right: clamp(20px, 3vw, 34px);
+  bottom: clamp(20px, 3vw, 34px);
+  z-index: 190;
+  width: 82px;
+  height: 82px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  isolation: isolate;
+}
+
+.floating-ai-assistant::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,255,255,.96) 0%, rgba(255,255,255,.76) 48%, rgba(255,255,255,0) 74%);
+  filter: blur(3px);
+  z-index: -1;
+}
+
+.floating-ai-assistant::after {
+  content: "";
+  position: absolute;
+  left: 19%;
+  right: 19%;
+  bottom: -2px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(9,13,22,.14);
+  filter: blur(7px);
+  transform: scaleX(.8);
+  transition: transform .35s ease, opacity .35s ease;
+  pointer-events: none;
+}
+
+.floating-ai-assistant.is-hovered::after {
+  transform: scaleX(.95);
+  opacity: .2;
+}
+
+.floating-ai-assistant__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.floating-ai-assistant canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.floating-ai-assistant__label {
+  position: absolute;
+  right: 72px;
+  top: 50%;
+  transform: translateY(-50%) translateX(8px);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid rgba(9,13,22,.09);
+  border-radius: 999px;
+  background: rgba(255,255,255,.78);
+  box-shadow: 0 10px 28px rgba(9,13,22,.08), inset 0 1px 0 rgba(255,255,255,.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  color: #1b2430;
+  font: 600 11px/1 ui-monospace, SFMono-Regular, Menlo, monospace;
+  letter-spacing: .11em;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity .28s ease, transform .32s cubic-bezier(.16,1,.3,1);
+  pointer-events: none;
+}
+
+.floating-ai-assistant.is-hovered .floating-ai-assistant__label,
+.floating-ai-assistant:focus-visible .floating-ai-assistant__label {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+}
+
+.floating-ai-assistant__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #c48e52;
+  box-shadow: 0 0 0 4px rgba(196,142,82,.11);
+}
+
+.floating-ai-assistant:focus-visible {
+  outline: 2px solid rgba(9,13,22,.72);
+  outline-offset: 4px;
+}
+
+@media (max-width: 680px) {
+  .floating-ai-assistant {
+    width: 62px;
+    height: 62px;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+  }
+  .floating-ai-assistant__label { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .floating-ai-assistant__label,
+  .floating-ai-assistant::after { transition: none; }
+}
