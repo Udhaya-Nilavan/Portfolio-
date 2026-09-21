@@ -5,3 +5,12 @@ dist-ssr
 .DS_Store
 .vscode/*
 !.vscode/extensions.json
+_backups/
+backups/
+scratch/
+*.tsbuildinfo
+.vercel/
+.env
+.env*.local
+
+.vercel

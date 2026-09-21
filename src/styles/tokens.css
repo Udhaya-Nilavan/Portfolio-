@@ -1,0 +1,163 @@
+/* =========================================================================
+   Udhaya Nilavan — Personal Portfolio
+   Design tokens.
+
+   CONTRAST RULE (non-negotiable):
+   Never hard-code a text colour. Always use one of the four foreground
+   tokens below, and only ever place them on their matching surface token.
+
+     --fg            on --bg / --surface / --surface-elevated / --card-bg
+     --muted-fg      on --bg / --surface / --surface-elevated / --card-bg
+     --subtle-fg     on --bg / --surface (metadata only, >= 4.5:1)
+     --on-accent     on --accent-color / --secondary-accent-color only
+     --accent-text   accent-coloured TEXT (darkened/lightened for contrast).
+                     Never use --accent-color itself for text.
+
+   Every pair below was checked against WCAG AA (4.5:1 body, 3:1 large).
+   ========================================================================= */
+
+:root {
+  /* ---- Type ---------------------------------------------------------- */
+  --font-display: 'Plus Jakarta Sans', 'Sora', -apple-system, system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, monospace;
+
+  /* Fluid type scale, ~1.25 ratio, clamped for mobile -> desktop */
+  --step--1: clamp(0.78rem, 0.76rem + 0.10vw, 0.84rem);
+  --step-0: clamp(0.95rem, 0.92rem + 0.16vw, 1.05rem);
+  --step-1: clamp(1.13rem, 1.06rem + 0.32vw, 1.33rem);
+  --step-2: clamp(1.38rem, 1.24rem + 0.66vw, 1.85rem);
+  --step-3: clamp(1.72rem, 1.45rem + 1.25vw, 2.60rem);
+  --step-4: clamp(2.10rem, 1.58rem + 2.40vw, 3.65rem);
+  --step-5: clamp(2.55rem, 1.60rem + 4.40vw, 5.10rem);
+
+  /* ---- Space / shape -------------------------------------------------- */
+  --space-2xs: 0.375rem;
+  --space-xs: 0.625rem;
+  --space-sm: 1rem;
+  --space-md: 1.5rem;
+  --space-lg: 2.5rem;
+  --space-xl: 4rem;
+  --space-2xl: 6rem;
+  --section-y: clamp(4.5rem, 3rem + 7vw, 8.5rem);
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  --maxw: 1180px;
+  --maxw-prose: 68ch;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 160ms;
+  --dur: 280ms;
+  --dur-slow: 620ms;
+
+  --nav-h: 56px;
+
+  /* =========================================================================
+     CLEAN WHITE / LIGHT VISUAL IDENTITY
+     Minimal, editorial, generous whitespace, dark charcoal typography
+     ========================================================================= */
+  --bg: #ffffff;
+  --bg-deep: #f8fafc;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --card-bg: #ffffff;
+  --card-bg-hover: #f8fafc;
+  --surface-sunken: #f8fafc;
+
+  /* Foregrounds — strong dark charcoal / near-black contrast */
+  --fg: #090d16;          /* 18.5:1 on #fff — primary high-contrast ink */
+  --muted-fg: #1e293b;    /* 12.5:1 on #fff — deep charcoal slate for prose and secondary text */
+  --subtle-fg: #334155;   /* 9.5:1 on #fff  — confident slate for metadata */
+
+  --border-color: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-subtle: #f1f5f9;
+
+  /* Primary Accent: Deep charcoal / slate ink */
+  --accent-color: #090d16;
+  --accent-text: #090d16;
+  --accent-soft: #f1f5f9;
+  --on-accent: #ffffff;
+
+  /* Secondary Accent: Restrained classic ink */
+  --secondary-accent-color: #2563eb;
+  --secondary-accent-text: #1d4ed8;
+  --secondary-accent-soft: #eff6ff;
+
+  /* Supporting tones */
+  --amber: #d97706;
+  --amber-soft: #fef3c7;
+  --slate: #475467;
+  --slate-soft: #f1f5f9;
+  --violet: #7c3aed;
+  --violet-text: #6d28d9;
+  --violet-soft: #f5f3ff;
+  --success-text: #16a34a;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 16px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.09), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  --shadow-nav: 0 8px 30px -4px rgba(0, 0, 0, 0.04), 0 2px 8px -2px rgba(0, 0, 0, 0.02);
+
+  --ring: rgba(9, 13, 22, 0.15);
+  --glow-a: rgba(37, 99, 235, 0.03);
+  --glow-b: rgba(14, 165, 233, 0.02);
+  --glow-c: rgba(99, 102, 241, 0.02);
+  --grid-line: rgba(0, 0, 0, 0.03);
+  --scrim: rgba(9, 13, 22, 0.35);
+  --nav-bg: rgba(255, 255, 255, 0.72);
+  --img-frame: #f8fafc;
+}
+
+[data-theme='light'],
+[data-theme='editorial'],
+[data-theme='dark'] {
+  --bg: #ffffff;
+  --bg-deep: #f8fafc;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --card-bg: #ffffff;
+  --card-bg-hover: #f8fafc;
+  --surface-sunken: #f8fafc;
+  --fg: #090d16;
+  --muted-fg: #1e293b;
+  --subtle-fg: #334155;
+  --border-color: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --border-subtle: #f1f5f9;
+  --accent-color: #090d16;
+  --accent-text: #090d16;
+  --accent-soft: #f1f5f9;
+  --on-accent: #ffffff;
+  --secondary-accent-color: #2563eb;
+  --secondary-accent-text: #1d4ed8;
+  --secondary-accent-soft: #eff6ff;
+  --amber: #d97706;
+  --amber-soft: #fef3c7;
+  --slate: #475467;
+  --slate-soft: #f1f5f9;
+  --violet: #7c3aed;
+  --violet-text: #6d28d9;
+  --violet-soft: #f5f3ff;
+  --success-text: #16a34a;
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 16px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 12px 28px -4px rgba(0, 0, 0, 0.09), 0 4px 8px -2px rgba(0, 0, 0, 0.04);
+  --shadow-nav: 0 10px 32px -4px rgba(9, 13, 22, 0.05), 0 2px 6px -1px rgba(9, 13, 22, 0.03);
+  --ring: rgba(9, 13, 22, 0.15);
+  --glow-a: rgba(37, 99, 235, 0.03);
+  --glow-b: rgba(14, 165, 233, 0.02);
+  --glow-c: rgba(99, 102, 241, 0.02);
+  --grid-line: rgba(0, 0, 0, 0.03);
+  --scrim: rgba(9, 13, 22, 0.35);
+  --nav-bg: rgba(255, 255, 255, 0.72);
+  --img-frame: #f8fafc;
+}

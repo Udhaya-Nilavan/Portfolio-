@@ -1,0 +1,486 @@
+/* =========================================================================
+   Base: reset, typography, focus, shared primitives
+   ========================================================================= */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  /* Offset anchor jumps so the floating nav never covers a heading */
+  scroll-padding-top: calc(var(--nav-h) + 2.5rem);
+  overflow-x: clip;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+  /* Guards against any child overflowing and creating a horizontal scrollbar */
+  overflow-x: clip;
+  transition: background-color var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+a {
+  color: var(--accent-text);
+  text-decoration-color: color-mix(in srgb, var(--accent-text) 40%, transparent);
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-color: currentColor;
+}
+
+::selection {
+  background: var(--accent-color);
+  color: var(--on-accent);
+}
+
+/* ---- Headings ---------------------------------------------------------- */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  color: var(--fg);
+  line-height: 1.12;
+  letter-spacing: -0.022em;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: var(--step-5);
+  letter-spacing: -0.038em;
+  font-weight: 700;
+}
+h2 {
+  font-size: var(--step-3);
+  letter-spacing: -0.028em;
+}
+h3 {
+  font-size: var(--step-1);
+}
+h4 {
+  font-size: var(--step-0);
+}
+
+p {
+  text-wrap: pretty;
+}
+
+/* ---- Focus ------------------------------------------------------------- */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-text);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---- Utilities --------------------------------------------------------- */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  top: 0.75rem;
+  left: 50%;
+  translate: -50% -150%;
+  z-index: 200;
+  padding: 0.625rem 1.125rem;
+  border-radius: var(--radius-pill);
+  background: var(--accent-color);
+  color: var(--on-accent);
+  font-weight: 600;
+  font-size: var(--step--1);
+  text-decoration: none;
+  box-shadow: var(--shadow-md);
+  transition: translate var(--dur) var(--ease-out);
+}
+
+.skip-link:focus-visible {
+  translate: -50% 0;
+}
+
+.shell {
+  width: 100%;
+  max-width: var(--maxw);
+  margin-inline: auto;
+  padding-inline: clamp(1.1rem, 4vw, 2.5rem);
+}
+
+.section {
+  position: relative;
+  padding-block: var(--section-y);
+  /* Scroll-margin so IntersectionObserver + anchors line up with the nav */
+  scroll-margin-top: calc(var(--nav-h) + 2rem);
+}
+
+.prose {
+  max-width: var(--maxw-prose);
+  color: var(--muted-fg);
+  font-size: var(--step-0);
+  line-height: 1.78;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-ligatures: none;
+  font-size: 0.86em;
+  letter-spacing: -0.01em;
+}
+
+/* ---- Cards ------------------------------------------------------------- */
+.card {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: border-color var(--dur) var(--ease-out), box-shadow var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+
+.card--hover:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+}
+
+/* ---- Buttons ----------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.7rem 1.15rem;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: var(--step--1);
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  text-decoration: none;
+  white-space: nowrap;
+  border: 1px solid transparent;
+  cursor: pointer;
+  /* Comfortable touch target on mobile */
+  min-height: 44px;
+  transition: background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+
+.btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.btn--primary {
+  background: var(--accent-color);
+  color: var(--on-accent);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--primary:hover {
+  background: color-mix(in srgb, var(--accent-color) 86%, var(--fg));
+  box-shadow: var(--shadow-md);
+}
+
+.btn--secondary {
+  background: var(--surface);
+  color: var(--fg);
+  border-color: var(--border-strong);
+}
+
+.btn--secondary:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-text);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--muted-fg);
+  border-color: var(--border-color);
+}
+
+.btn--ghost:hover {
+  color: var(--fg);
+  border-color: var(--border-strong);
+  background: var(--surface);
+}
+
+.btn__icon {
+  flex: none;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+
+.btn:hover .btn__icon--shift {
+  transform: translateX(2px);
+}
+
+.btn:hover .btn__icon--lift {
+  transform: translateY(-2px);
+}
+
+/* ---- Tags / pills ------------------------------------------------------ */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  background: var(--surface-sunken);
+  color: var(--muted-fg);
+  font-size: var(--step--1);
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.tag--accent {
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent-color) 28%, transparent);
+  color: var(--accent-text);
+}
+
+.tag--cyan {
+  background: var(--secondary-accent-soft);
+  border-color: color-mix(in srgb, var(--secondary-accent-color) 30%, transparent);
+  color: var(--secondary-accent-text);
+}
+
+.tag--violet {
+  background: var(--violet-soft);
+  border-color: color-mix(in srgb, var(--violet) 28%, transparent);
+  color: var(--violet-text);
+}
+
+.tag-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+/* ---- Scroll reveal ----------------------------------------------------- */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+  will-change: opacity, transform;
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ---- Reduced motion ---------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Applied by ThemeProvider when the user's OS asks for reduced motion.
+   Belt and braces: covers JS-driven animation too. */
+.reduced-motion .reveal {
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+/* =========================================================================
+   Motion language
+
+   Four related-but-distinct reveal patterns. Sections use different ones so
+   the page does not read as the same fade-and-lift repeated fourteen times,
+   but they share timing and easing so it still feels like one product.
+   ========================================================================= */
+
+.reveal[data-motion='rise'] {
+  transform: translateY(18px);
+}
+
+.reveal[data-motion='slide-left'] {
+  transform: translateX(-22px);
+}
+
+.reveal[data-motion='slide-right'] {
+  transform: translateX(22px);
+}
+
+.reveal[data-motion='scale'] {
+  transform: scale(0.965);
+}
+
+.reveal[data-motion='clip'] {
+  transform: none;
+  clip-path: inset(0 0 100% 0);
+  transition: opacity var(--dur-slow) var(--ease-out),
+    clip-path 820ms var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal[data-motion='clip'].is-visible {
+  clip-path: inset(0 0 0 0);
+}
+
+.reveal.is-visible {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal[data-motion='clip'] {
+    clip-path: none;
+  }
+}
+
+.reduced-motion .reveal[data-motion='clip'] {
+  clip-path: none !important;
+}
+
+/* ---- Word-level stagger, used once in the hero headline ---------------- */
+.word-reveal {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.word-reveal > span {
+  display: inline-block;
+  transform: translateY(100%);
+  animation: word-up 700ms var(--ease-out) forwards;
+  animation-delay: var(--word-delay, 0ms);
+}
+
+@keyframes word-up {
+  to {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-reveal > span {
+    transform: none;
+    animation: none;
+  }
+}
+
+.reduced-motion .word-reveal > span {
+  transform: none !important;
+  animation: none !important;
+}
+
+/* ---- Scroll cue -------------------------------------------------------- */
+.scroll-cue {
+  position: absolute;
+  bottom: clamp(1.1rem, 3vh, 2.2rem);
+  left: 50%;
+  translate: -50% 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--subtle-fg);
+  font-size: var(--step--1);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-out);
+}
+
+.scroll-cue:hover {
+  color: var(--accent-text);
+}
+
+.scroll-cue__chevron {
+  animation: cue-bob 2.4s var(--ease-in-out) infinite;
+}
+
+@keyframes cue-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(5px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue__chevron {
+    animation: none;
+  }
+}
+
+@media (max-height: 700px), (max-width: 620px) {
+  .scroll-cue {
+    display: none;
+  }
+}

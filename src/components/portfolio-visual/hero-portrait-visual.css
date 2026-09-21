@@ -1,0 +1,74 @@
+/* ============================================================
+   APPROVED PORTFOLIO HERO PORTRAIT VISUAL
+   ============================================================ */
+
+.hero-portrait-visual {
+  position: relative;
+  width: min(100%, 560px);
+  margin: 0;
+  overflow: visible;
+}
+
+.hero-portrait-visual__image {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  object-fit: contain;
+  border: 0;
+  background: transparent;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/*
+  The source artwork already contains the portrait, blueprint doodles,
+  annotation and opportunity card. Keep it visually quiet on the light
+  portfolio background.
+ */
+.hero-portrait-visual::after {
+  content: "";
+  position: absolute;
+  inset: 4% 6% 4% 6%;
+  z-index: -1;
+  border-radius: 28px;
+  box-shadow: 0 26px 64px rgba(23, 43, 77, 0.055);
+  pointer-events: none;
+}
+
+@media (max-width: 1080px) {
+  .hero-portrait-visual {
+    width: min(100%, 460px);
+  }
+}
+
+@media (max-width: 780px) {
+  .hero-portrait-visual {
+    width: min(100%, 420px);
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-portrait-visual {
+    width: min(100%, 340px);
+    margin-inline: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-portrait-visual,
+  .hero-portrait-visual__image {
+    transition: none !important;
+  }
+}
+
+.portfolio-un-logo {
+  display: block;
+  object-fit: contain;
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+}
+
